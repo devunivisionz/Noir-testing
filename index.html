@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#1e1e2f"/>
+  <title>Noir AI Post Analyzer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      background-color: #f9f9f9;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 30px;
+    }
+    
+    .form-section {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    #result {
+       flex: 1;
+       min-width: 300px;
+       white-space: pre-wrap;
+       background: #fff;
+       padding: 25px;
+       margin-top: 0;
+       border-radius: 12px;
+       box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+       border-left: 5px solid #1e1e2f;
+       transition: all 0.3s ease;
+       max-height: 600px;
+       overflow-y: auto;
+       position: sticky;
+       top: 20px;
+       scroll-behavior: smooth;
+     }
+    h2 {
+      color: #1e1e2f;
+      border-bottom: 2px solid #1e1e2f;
+      padding-bottom: 10px;
+      margin-bottom: 25px;
+      text-align: center;
+      font-size: 28px;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 20px;
+      color: #333;
+      font-size: 16px;
+    }
+    textarea, select, input {
+      width: 100%;
+      margin-top: 8px;
+      padding: 14px;
+      font-size: 16px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      background-color: #fff;
+    }
+    textarea:focus, select:focus, input:focus {
+      outline: none;
+      border-color: #1e1e2f;
+      box-shadow: 0 0 8px rgba(30, 30, 47, 0.3);
+      transform: translateY(-2px);
+    }
+    button {
+      cursor: pointer;
+      background-color: #1e1e2f;
+      color: #fff;
+      border: none;
+      margin-top: 30px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      width: 100%;
+      padding: 16px;
+      font-size: 18px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    button:hover {
+      background-color: #2d2d45;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+    /* Result styles moved to container section */
+    .results-container {
+      padding-right: 10px;
+    }
+    
+    .metric-card {
+      margin-bottom: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      background-color: #f8f8f8;
+      border-left: 4px solid #1e1e2f;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease;
+      width: calc(100% - 10px);
+    }
+    .metric-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .scroll-indicator {
+      display: none;
+      text-align: center;
+      padding: 10px 0;
+      color: #888;
+      font-size: 14px;
+      animation: bounce 1.5s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-10px);
+      }
+      60% {
+        transform: translateY(-5px);
+      }
+    }
+    .metric-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #1e1e2f;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .processing-info {
+      font-size: 13px;
+      color: #888;
+      margin-top: 25px;
+      text-align: right;
+      font-style: italic;
+      padding-top: 15px;
+      border-top: 1px dashed #ddd;
+    }
+    
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      text-align: center;
+      color: #1e1e2f;
+      font-weight: 500;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(30, 30, 47, 0.1);
+      border-radius: 50%;
+      border-top-color: #1e1e2f;
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 15px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      background-color: #fff5f5;
+      border-left: 4px solid #e53e3e;
+      padding: 15px;
+      border-radius: 8px;
+      color: #c53030;
+      font-weight: 500;
+      margin-top: 20px;
+    }
+    
+    .placeholder-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      color: #888;
+    }
+    
+    .placeholder-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      opacity: 0.7;
+    }
+    
+    .placeholder-content h3 {
+      margin: 0 0 10px 0;
+      color: #1e1e2f;
+    }
+    
+    .placeholder-content p {
+      margin: 0;
+      font-size: 16px;
+    }
+    
+    /* Custom scrollbar for result box */
+     #result::-webkit-scrollbar {
+       width: 8px;
+     }
+     
+     #result::-webkit-scrollbar-track {
+       background: #f1f1f1;
+       border-radius: 10px;
+     }
+     
+     #result::-webkit-scrollbar-thumb {
+       background: #1e1e2f;
+       border-radius: 10px;
+     }
+     
+     #result::-webkit-scrollbar-thumb:hover {
+       background: #2d2d45;
+     }
+     
+     /* Responsive design */
+     @media (max-width: 768px) {
+       .container {
+         flex-direction: column;
+       }
+       
+       #result {
+         margin-top: 30px;
+         position: static;
+         max-height: 500px;
+       }
+     }
+  </style>
+</head>
+<body>
+
+  <h2>Noir AI Post Analyzer</h2>
+  
+  <div class="container">
+    <div class="form-section">
+      <label for="token">Your Intuity Bearer Token:</label>
+      <input type="text" id="token" placeholder="Paste your token here..." />
+
+      <label for="postText">Social Media Post:</label>
+      <textarea id="postText" rows="6" placeholder="Enter your post content..."></textarea>
+
+      <label for="platform">Select Platform:</label>
+      <select id="platform">
+        <option value="LinkedIn">LinkedIn</option>
+        <option value="Instagram">Instagram</option>
+        <option value="Twitter">Twitter</option>
+        <option value="Facebook">Facebook</option>
+      </select>
+
+      <label for="followerCount">Follower Count:</label>
+      <input type="number" id="followerCount" placeholder="Enter your follower count..." min="0" value="0" />
+
+      <button onclick="analyzePost()">Analyze Post</button>
+    </div>
+    
+    <div id="result">
+      <div class="placeholder-content">
+        <div class="placeholder-icon">📊</div>
+        <h3>Analysis Results</h3>
+        <p>Your analysis results will appear here after you analyze a post.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://psychic-garbanzo-4dzv.onrender.com/predict-engagement'; // Replace with actual Noir endpoint
+    
+    // Function to safely prepare the token for API requests
+    function prepareToken(rawToken) {
+      // First trim any whitespace
+      let cleaned = rawToken.trim();
+      
+      // Handle the specific token format issue
+      // If the token contains the full "Bearer" prefix, extract just the token part
+      if (cleaned.toLowerCase().startsWith('bearer ')) {
+        cleaned = cleaned.substring(7).trim();
+      }
+      
+      return cleaned;
+    }
+    
+    // Function to validate token format
+    function isValidToken(token) {
+      // Basic validation - check if token exists and has expected JWT format
+      // (three parts separated by periods)
+      const tokenOnly = token.startsWith('Bearer ') ? token.substring(7).trim() : token;
+      return tokenOnly && tokenOnly.split('.').length === 3;
+    }
+
+    async function analyzePost() {
+      const token = document.getElementById('token').value.trim();
+      const postText = document.getElementById('postText').value.trim();
+      const platform = document.getElementById('platform').value;
+      const followerCount = parseInt(document.getElementById('followerCount').value) || 0;
+      const resultDiv = document.getElementById('result');
+
+      if (!token || !postText) {
+        resultDiv.innerHTML = `
+          <div class="error-message">
+            <strong>Missing Information:</strong> Please enter both your token and the post content.
+          </div>
+        `;
+        return;
+      }
+      
+      // Validate token format
+      if (!isValidToken(token)) {
+        resultDiv.innerHTML = `
+          <div class="error-message">
+            <strong>Invalid Token:</strong> Please check your token format and try again.
+          </div>
+        `;
+        return;
+      }
+
+      // Show loading animation
+      resultDiv.innerHTML = `
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <div>Analyzing your post...</div>
+        </div>
+      `;
+
+      try {
+        // Use our token preparation function
+        const cleanToken = prepareToken(token);
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + cleanToken
+          },
+          body: JSON.stringify({
+            text: postText,
+            platform: platform,
+            follower_count: followerCount
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API error (${response.status}): ${errorText}`);
+        }
+
+        const data = await response.json();
+
+        resultDiv.innerHTML = `
+          <div class="results-container">
+            <div class="metric-card">
+              <div class="metric-title">📊 Engagement Score</div>
+              <div>${data.engagement_score || 'N/A'}</div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-title">📈 Predicted Metrics</div>
+              <div>
+                👍 Likes: ${data.predicted_metrics?.likes || 'N/A'}<br>
+                💬 Comments: ${data.predicted_metrics?.comments || 'N/A'}<br>
+                🔄 Shares: ${data.predicted_metrics?.shares || 'N/A'}
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-title">🎯 Confidence</div>
+              <div>${(data.confidence * 100).toFixed(0)}%</div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-title">💡 Suggestion</div>
+              <div>${data.suggestion || 'No suggestions available'}</div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-title">👥 Follower Tier</div>
+              <div>${data.follower_tier || 'N/A'}</div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-title">⭐ Content Quality Score</div>
+              <div>${data.content_quality_score || 'N/A'}/5</div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-title">🚀 Viral Potential</div>
+              <div>${data.is_viral_potential ? '✅ Yes' : '❌ No'}</div>
+            </div>
+            
+            <div class="processing-info">
+              Processing time: ${data.processing_time_ms}ms
+            </div>
+            
+            <div class="scroll-indicator">
+              ↕️ Scroll for more
+            </div>
+          </div>
+        `;
+        
+        // Check if content overflows and show scroll indicator if needed
+        setTimeout(() => {
+          const resultElement = document.getElementById('result');
+          const scrollIndicator = document.querySelector('.scroll-indicator');
+          if (resultElement.scrollHeight > resultElement.clientHeight) {
+            scrollIndicator.style.display = 'block';
+          }
+        }, 100);
+      } catch (err) {
+        resultDiv.innerHTML = `
+          <div class="error-message">
+            <strong>Error:</strong> ${err.message}
+          </div>
+        `;
+      }
+    }
+  </script>
+
+</body>
+</html>
